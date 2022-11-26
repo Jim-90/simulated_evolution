@@ -2,6 +2,7 @@ import pygame, sys, random
 from settings import Settings
 from rules import Rules
 from microbe import Microbe
+from prey import Prey
 
 def update_screen(screen,settings, microbes, foods):
     """Update screen and flip"""
@@ -31,13 +32,21 @@ def update_microbes(settings, screen, rules, microbes, foodset, foods):
         microbe.update_direction()
         microbe.move()
         check_food(rules, microbe, foodset, foods)
+        microbe.check_alive()
 
-        microbe.age += 1
-        microbe.ticks += 1
-        if (microbe.age > rules.offspring_age) and (microbe.energy >= 1000):
-            microbe.age == 0
-            microbe.energy = microbe.energy/2
-            new_microbes.append(create_offspring(settings, screen, rules, microbe))
+        if microbe.is_alive:
+            microbe.age += 1
+            microbe.ticks += 1
+            if (microbe.age > rules.offspring_age) and (microbe.energy >= 1000):
+                microbe.age == 0
+                microbe.energy = microbe.energy/2
+                new_microbes.append(create_offspring(settings, screen, rules, microbe))
+
+    # Remove dead microbes
+    for microbe in microbes.copy():
+        if not microbe.is_alive:
+            microbes.remove(microbe)
+
     microbes += new_microbes    
 
 def generate_microbe_positions(settings, n_microbes):
@@ -56,18 +65,21 @@ def generate_microbe_positions(settings, n_microbes):
 
 def create_offspring(settings, screen, rules, parent):
     microbe = Microbe(settings, screen, rules, [parent.pos_x, parent.pos_y])
+    microbe.mutate_genome(0.05)
     microbe.energy = parent.energy
     return microbe
 
 
-def generate_random_food(settings, food_prob):
+def generate_random_food(settings, screen, food_prob, food_set, food):
     npos = settings.game_width*settings.game_height
-    cords_set = set()
-    while len(cords_set) < npos*food_prob:
-        x, y = random.randint(0, settings.game_width-1), random.randint(0, settings.game_height-1)
-        cords_set.add((x,y))
     
-    return cords_set
+    while len(food_set) < npos*food_prob:
+        x, y = random.randint(0, settings.game_width-1), random.randint(0, settings.game_height-1)
+        food_set.add((x,y))
+        food.append(Prey(settings, screen, (x,y)))
+
+    return food, food_set
+
 
 def check_food(rules, microbe, foodset, foods):
     pred_pos = (microbe.pos_x, microbe.pos_y)
@@ -82,12 +94,11 @@ def check_food(rules, microbe, foodset, foods):
                 break
             food_id += 1
 
-    
+
+#def add_food(foodset, foods):
+
+
 def update_state(microbe):
     microbe.ticks += 1
     microbe.age += 1
     
-def check_alive(microbes):
-    for idx, microbe in enumerate(microbes.copy()):
-        if microbe.is_dead:
-            del microbes[idx]

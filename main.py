@@ -27,14 +27,14 @@ def main():
     init_microbes = 30
     microbes = []
     food = []
+    food_set = set()
 
     xy_pos = gf.generate_microbe_positions(settings, init_microbes)
-    food_pos = gf.generate_random_food(settings, 0.4)
+    food, food_pos = gf.generate_random_food(settings, screen, 0.2, food_set, food)
 
     for xy in xy_pos:
         microbes.append(Microbe(settings, screen, rules, xy))
-    for xy in food_pos:
-        food.append(Prey(settings, screen, xy))
+
 
     while True:
 

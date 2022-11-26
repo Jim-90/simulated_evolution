@@ -13,7 +13,7 @@ class Microbe():
         self.direction = random.randint(0, 7)                          #           [0   1   2]
         self.generation = 0                                            # DIRECTON  [7       3]
         self.offspring = 0                                             #           [6   5   4]
-        self.is_dead = False
+        self.is_alive = True
         
         self.genome = self.generate_genome()
         self.pos_x = init_pos[0] #random.randint(0, self.settings.game_width)
@@ -27,6 +27,14 @@ class Microbe():
         
         return [x/sum(genome_raw) for x in genome_raw]
 
+
+    def mutate_genome(self, mutation_level):
+        """Modify movement probability, simulating mutation"""
+        genome_id = random.randrange(8)
+        self.genome[genome_id] += random.choice([-1, 1])*mutation_level
+        sum_genome = sum(self.genome)
+        self.genome = [x/sum_genome for x in self.genome[:]]
+        
 
     def update_direction(self):
         """
@@ -49,6 +57,7 @@ class Microbe():
 
         self.direction = (self.direction + idx)%8
         self.energy -= self.direction_penalty(idx)
+        self.is_alive = self.check_alive()
 
 
     def direction_penalty(self, dir_index):
@@ -81,9 +90,16 @@ class Microbe():
             
             # Update energy
             self.energy -= 1
-    
+            self.is_alive = self.check_alive()
+
     
     def draw_microbe(self):
             """Draw microbe"""
             pygame.draw.rect(self.screen, self.settings.microbe_color, self.rect)
 
+
+    def check_alive(self):
+        if self.energy <= 0:
+            return False
+        else:
+            return True
